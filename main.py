@@ -17,4 +17,3 @@ SYSTEM_MESSAGE = (
 )
 voice="alloy"
 app=FastAPI()
-@app.api_route()
