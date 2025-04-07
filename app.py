@@ -1,9 +1,9 @@
 import os
 import requests
 from fastapi import FastAPI, Form, Query
-from fastapi.responses import PlainTextResponse
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from groq import Groq  # Import Groq SDK
+from fastapi.responses import PlainTextResponse
 
 app = FastAPI()
 
@@ -20,7 +20,7 @@ LANGUAGE_OPTIONS = {
 }
 
 @app.post("/incoming_call", response_class=PlainTextResponse)
-async def incoming_call():
+def incoming_call():
     """Handles incoming calls and asks the user to select a language."""
     response = VoiceResponse()
     gather = Gather(action="/select_language", num_digits=1)
@@ -33,7 +33,7 @@ async def incoming_call():
     return str(response)
 
 @app.post("/select_language", response_class=PlainTextResponse)
-async def select_language(Digits: str = Form(...)):
+def select_language(Digits: str = Form(...)):
     """Processes language selection and prompts user for input."""
     if Digits not in LANGUAGE_OPTIONS:
         return str(VoiceResponse().say("Invalid selection. Please try again.", language="en"))
@@ -62,7 +62,7 @@ async def select_language(Digits: str = Form(...)):
     response.append(gather)
     return str(response)
 
-def get_ai_response(user_text, lang):
+def get_ai_response(user_text: str, lang: str):
     """Fetches AI-generated response from Groq API."""
     system_prompt = {
         "en": "You are an AI that only responds in English, keeping responses short and precise.",
@@ -89,18 +89,15 @@ def get_ai_response(user_text, lang):
             "en": "Sorry, I am unable to process your request."
         }.get(lang, "Sorry, an error occurred.")
 
-    print(f"\nUser ({lang}): {user_text}")
-    print(f"AI Response: {ai_response}\n")
-
     return ai_response
 
 @app.post("/process_speech", response_class=PlainTextResponse)
-async def process_speech(SpeechResult: str = Form(None), lang: str = Query("en")):
+def process_speech(SpeechResult: str = Form(""), lang: str = Query("en")):
     """Processes user speech input and gets AI response."""
     if lang not in ["en", "hi", "kn"]:
-        lang = "en"  # Default to English if the language is unknown
+        lang = "en"
 
-    voice = next((value["voice"] for value in LANGUAGE_OPTIONS.values() if value["lang"] == lang), "Google.en-IN-Wavenet-D")
+    voice = next((value["voice"] for key, value in LANGUAGE_OPTIONS.items() if value["lang"] == lang), "Google.en-IN-Wavenet-D")
 
     if not SpeechResult:
         response = VoiceResponse()
@@ -118,7 +115,6 @@ async def process_speech(SpeechResult: str = Form(None), lang: str = Query("en")
     response = VoiceResponse()
     response.say(ai_response, language=lang, voice=voice)
 
-    # Repeat speech recognition to continue conversation
     gather = Gather(
         action=f"/process_speech?lang={lang}",
         input="speech",
