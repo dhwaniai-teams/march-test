@@ -1,5 +1,4 @@
-import os
-import requests
+
 from fastapi import FastAPI, Form, Query
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from groq import Groq  # Import Groq SDK
@@ -7,7 +6,7 @@ from fastapi.responses import PlainTextResponse
 
 app = FastAPI()
 
-# Set your Groq API Key (Store securely in environment variables)
+
 GROQ_API_KEY = "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"
 
 # Initialize Groq client
@@ -79,7 +78,6 @@ def get_ai_response(user_text: str, lang: str):
             model="llama-3.3-70b-versatile",  # Ensure this is the correct Groq model
             stream=False,
         )
-
         ai_response = chat_completion.choices[0].message.content
     except Exception as e:
         print(f"Error fetching response from Groq: {e}")
